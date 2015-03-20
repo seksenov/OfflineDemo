@@ -37,7 +37,8 @@ html5rocks.indexedDB.open = function() {
   
   };
 
-  request.onsuccess = function () {
+  request.onsuccess = function (e) {
+    html5rocks.indexedDB.db = e.target.result;
     html5rocks.indexedDB.getAllTodoItems();
   }
  
