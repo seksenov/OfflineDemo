@@ -1,6 +1,6 @@
 var html5rocks = {};
-var indexedDB = window.indexedDB || window.webkitIndexedDB ||
-                window.mozIndexedDB;
+//var indexedDB = window.indexedDB; //|| window.webkitIndexedDB ||
+                //window.mozIndexedDB;
  
 if ('webkitIndexedDB' in window) {
   window.IDBTransaction = window.webkitIDBTransaction;
@@ -15,40 +15,38 @@ html5rocks.indexedDB.onerror = function(e) {
 };
  
 html5rocks.indexedDB.open = function() {
-  var request = indexedDB.open("todos");
+  var request = indexedDB.open("todos", 1);
  
-  request.onsuccess = function(e) {
+  request.onupgradeneeded = function(e) {
     var v = "1.99";
     html5rocks.indexedDB.db = e.target.result;
     var db = html5rocks.indexedDB.db;
     // We can only create Object stores in a setVersion transaction;
-    if (v!= db.version) {
-      var setVrequest = db.setVersion(v);
+    
  
       // onsuccess is the only place we can create Object Stores
-      setVrequest.onerror = html5rocks.indexedDB.onerror;
-      setVrequest.onsuccess = function(e) {
-        if(db.objectStoreNames.contains("todo")) {
+     
+      if(db.objectStoreNames.contains("todo")) {
           db.deleteObjectStore("todo");
         }
+        
  
         var store = db.createObjectStore("todo",
           {keyPath: "timeStamp"});
  
-        html5rocks.indexedDB.getAllTodoItems();
-      };
-    }
-    else {
-      html5rocks.indexedDB.getAllTodoItems();
-    }
+  
   };
+
+  request.onsuccess = function () {
+    html5rocks.indexedDB.getAllTodoItems();
+  }
  
   request.onerror = html5rocks.indexedDB.onerror;
 }
  
 html5rocks.indexedDB.addTodo = function(todoText) {
   var db = html5rocks.indexedDB.db;
-  var trans = db.transaction(["todo"], IDBTransaction.READ_WRITE);
+  var trans = db.transaction(["todo"], "readwrite");
   var store = trans.objectStore("todo");
  
   var data = {
@@ -69,7 +67,7 @@ html5rocks.indexedDB.addTodo = function(todoText) {
  
 html5rocks.indexedDB.deleteTodo = function(id) {
   var db = html5rocks.indexedDB.db;
-  var trans = db.transaction(["todo"], IDBTransaction.READ_WRITE);
+  var trans = db.transaction(["todo"], "readwrite");
   var store = trans.objectStore("todo");
  
   var request = store.delete(id);
@@ -88,7 +86,7 @@ html5rocks.indexedDB.getAllTodoItems = function() {
   todos.innerHTML = "";
  
   var db = html5rocks.indexedDB.db;
-  var trans = db.transaction(["todo"], IDBTransaction.READ_WRITE);
+  var trans = db.transaction(["todo"], "readwrite");
   var store = trans.objectStore("todo");
  
   // Get everything in the store;
